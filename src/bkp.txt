@@ -1,0 +1,225 @@
+import React from 'react'
+import Button from '@material-ui/core/Button';
+import ReactWeather from 'react-open-weather';
+import OpenWeatherMap from 'react-open-weather-map';
+import * as am4core from "@amcharts/amcharts4/core";
+import * as am4charts from "@amcharts/amcharts4/charts";
+import am4themes_animated from "@amcharts/amcharts4/themes/animated";
+import 'react-open-weather/lib/css/ReactWeather.css';
+am4core.useTheme(am4themes_animated);
+export default class Weather extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { counter: 0,isLoaded: false,isLoadedHourly:false};
+    }
+    
+    getHourlyWeather=()=>{
+        fetch("http://api.openweathermap.org/data/2.5/forecast/?q=London&appid=a2188e4352f73caa4790ce1e4ed63aa7")
+        .then(res => res.json())
+        .then(
+          (result) => {
+            this.setState({
+              
+                  hourly:{
+                      data:result
+                  } ,
+                  isLoadedHourly: true,
+              });
+            console.log(this.state.hourly);
+            
+            },
+          (error) => {
+            this.setState({
+                isLoadedHourly: true,
+              error
+            });
+          }
+        )
+        if(this.state.isLoadedHourly){
+            if (this.chart) {
+                this.chart.data={};
+              }
+              var newData=[], dd,mm,yyyy;
+              var checkDuplicate=[];
+        for (let i = 0; i < this.state.hourly.data.list.length; i++) {
+            console.log(this.state.hourly.data.list[i].dt_txt);
+            this.setState({
+                isLoadedHourly: false,
+              
+            });
+
+            dd = new Date(this.state.hourly.data.list[i].dt_txt).getDate();
+            mm = new Date(this.state.hourly.data.list[i].dt_txt).getMonth() + 1;
+            yyyy=new Date(this.state.hourly.data.list[i].dt_txt).getFullYear() ;
+            if(!checkDuplicate.includes(dd)){
+                checkDuplicate.push(dd);
+                newData.push({ date: new Date(yyyy,mm,dd), name: "name" + i, value: this.state.hourly.data.list[i].main.temp+'°C' });
+            
+            }
+            
+
+            // index is even
+            
+            //i=i+2;
+        }
+        console.log(checkDuplicate)
+          this.chart.data=newData;
+          console.log(this.chart);
+          this.setState({
+            isLoadedHourly: true,
+          
+        });
+        }
+        //var hourly=[];
+       
+          
+         
+        //const hourly = Object.assign({}, {firstName: user.firstName, lastName: user.lastName})
+        
+
+    }
+
+
+
+    componentDidMount(){
+        fetch("https://api.openweathermap.org/data/2.5/weather?q=Mumbai&appid=a2188e4352f73caa4790ce1e4ed63aa7")
+      .then(res => res.json())
+      .then(
+        (result) => {
+          this.setState({
+            isLoaded: true,
+				weather:{
+                    data:result
+                } ,
+		    });
+          console.log(result);
+          
+          //localStorage.setItem('Users', JSON.stringify(result.users));
+        },
+        (error) => {
+          this.setState({
+            isLoaded: true,
+            error
+          });
+        }
+      )
+      let chart = am4core.create("chartdiv", am4charts.XYChart);
+
+      chart.paddingRight = 20;
+  
+      let data = [];
+      let visits = 10;
+
+      for (let i = 1; i < 366; i++) {
+        visits += Math.round((Math.random() < 0.5 ? 1 : -1) * Math.random() * 10);
+        data.push({ date: new Date(2018, 0, i), name: "name" + i, value: visits });
+      }
+  
+      chart.data = data;
+      console.log(chart);
+  console.log(data,chart.data)
+      let dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+      dateAxis.renderer.grid.template.location = 0;
+  
+      let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+      valueAxis.tooltip.disabled = false;
+      valueAxis.renderer.minWidth = 35;
+  
+      let series = chart.series.push(new am4charts.LineSeries());
+      series.dataFields.dateX = "date";
+      series.dataFields.valueY = "value";
+  
+      series.tooltipText = "{valueY.value}";
+      chart.cursor = new am4charts.XYCursor();
+  
+      let scrollbarX = new am4charts.XYChartScrollbar();
+      scrollbarX.series.push(series);
+      chart.scrollbarX = scrollbarX;
+  
+      this.chart = chart;
+
+    }
+    componentWillUnmount() {
+        if (this.chart) {
+          this.chart.dispose();
+        }
+      }
+    render() {
+        const sample={
+        data:
+        {
+            
+              "weather": [
+                {
+                  "id": 500,
+                  "main": "Rain",
+                  "description": "light rain",
+                  "icon": "01n"
+                }
+              ],
+              "base": "cmc stations",
+              "main": {
+                "temp": 16.62,
+                "pressure": 1013,
+                "humidity": 88,
+                "temp_min": 15,
+                "temp_max": 18.5
+              },
+              "wind": {
+                "speed": 3.6,
+                "deg": 250
+              },
+              "rain": {
+                "3h": 0.215
+              },
+              "clouds": {
+                "all": 32
+              },
+              "dt": 1473541622,
+              "sys": {
+                "type": 1,
+                "id": 5091,
+                "message": 0.0107,
+                "country": "GB",
+                "sunrise": 1473485363,
+                "sunset": 1473531820
+              },
+              "id": 2643743,
+              "name": "London",
+              "cod": 200
+            }
+          }
+        
+        //const map = { data: sample };
+        //const config = { containerClassName: 'open-weather-map-container-class-name' };
+      return (
+          <div>
+      <h1>Hello, Ash{this.state.counter}</h1>
+      <Button variant="contained" color="primary" onClick={this.getHourlyWeather}>
+      Hello World
+    </Button>
+    
+    {/* <ReactWeather
+    forecast="5days"
+    apikey="db14884b386049c180582407191404"
+    type="city"
+    city="atlanta"/> */}
+      { 
+                    (this.state.isLoaded)?( 
+                        <OpenWeatherMap {...this.state.weather} />
+                    ) : ( 
+                   <p>Loading... </p>
+                    ) 
+                } 
+                { 
+                    
+                        <div id="chartdiv" style={{ width: "100%", height: "500px" }}></div>
+                    
+                } 
+                
+        
+
+    </div>
+      );
+    }
+  }
